@@ -1,0 +1,26 @@
+---
+#example api yaml
+  api:
+    context: .
+    dockerfile: Dockerfile
+    environment:
+      DB_USER: "bot"
+      DB_PASSWORD: "bot"
+
+    networks:
+      - network
+    ports:
+      - "8080:8080"
+---
+#example db yaml
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: bot
+      POSTGRES_USER: bot
+      POSTGRES_PASSWORD: bot
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql

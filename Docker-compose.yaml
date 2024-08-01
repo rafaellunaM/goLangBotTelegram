@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DB_USER: "bot"
+      DB_PASSWORD: "bot"
+    ports:
+      - "8080:8080"
+    networks:
+      - network
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: bot
+      POSTGRES_USER: bot
+      POSTGRES_PASSWORD: bot
+    ports:
+      - "5432:5432"
+
+networks:
+  network:
+    driver: bridge
