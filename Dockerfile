@@ -2,12 +2,11 @@ FROM golang:1.22
 
 WORKDIR /app
 
-COPY go.mod ./
+COPY . .
 RUN go mod download && go mod verify
 
-COPY main.go ./
-RUN go build -v -o ./app
+RUN go build -v -o ./app/main.go
 
 EXPOSE 8080
 
-CMD ["./app"]
+CMD ["./app/main.go"]

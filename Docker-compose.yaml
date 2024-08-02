@@ -8,6 +8,9 @@ services:
     environment:
       DB_USER: "bot"
       DB_PASSWORD: "bot"
+      DB_NAME: bot
+      DB_HOST: localhost
+      DB_PORT: 5432
     ports:
       - "8080:8080"
     networks:
@@ -22,6 +25,8 @@ services:
       POSTGRES_PASSWORD: bot
     ports:
       - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
 networks:
   network:
