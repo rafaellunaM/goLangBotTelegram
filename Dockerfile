@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY . .
 RUN go mod download && go mod verify
+RUN go get -u github.com/go-telegram/bot
+RUN go get github.com/joho/godotenv
 
 RUN go build -v -o ./app/main.go
 
