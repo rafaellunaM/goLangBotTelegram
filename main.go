@@ -1,63 +1,90 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
-	"net/http"
+	"context"
+	"log"
+	"os"
+	"os/signal"
 
-	dbConfig "botTelegram/dbconfig"
-
-	_ "github.com/lib/pq"
+	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
+	"github.com/joho/godotenv"
 )
 
-var db *sql.DB
-var err error
-
-func checkErr(err error) {
-	if err != nil {
-		panic(err.Error())
-	}
-}
-
 func main() {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "app example")
-	})
-
-	port := ":8080"
-	fmt.Printf("porta%s\n", port)
-
-	if err := http.ListenAndServe(port, nil); err != nil {
-		fmt.Printf("Erro ao iniciar o servidor: %s\n", err)
+	opts := []bot.Option{
+		bot.WithDefaultHandler(processUpdate),
 	}
 
-	fmt.Printf("Acessing %s ...", dbConfig.DbName)
-	db, err = sql.Open(dbConfig.PostgresDriver, dbConfig.DataSourceName)
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("Erro ao carregar o arquivo .env: %v", err)
+	}
 
+	botToken := os.Getenv("toke_telegram")
+	if botToken == "" {
+		log.Fatal("A variável de ambiente 'toke_telegram' não está definido")
+	}
+
+	b, err := bot.New(botToken, opts...)
 	if err != nil {
-		panic(err.Error())
-
-	} else {
-		fmt.Println("Connected")
+		panic(err)
 	}
 
-	defer db.Close()
-
+	b.Start(ctx)
 }
 
-func sqlSelect() {
+func welcome() string {
+	return "Olá, seja bem-vindo a lombratec\nEscolha uma das opções:\n1 - Suporte\n2 - Produtos\n3 - Atendente"
+}
 
-	sqlStatement, err := db.Query("SELECT * FROM " + dbConfig.TableName)
-	checkErr(err)
+func sendWelcomeMessage(ctx context.Context, b *bot.Bot, chatID int64) {
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: chatID,
+		Text:   welcome(),
+	})
+}
 
-	for sqlStatement.Next() {
+func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
+	answer := update.Message.Text
 
-		var products dbConfig.Article
+	switch answer {
+	case "1":
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "Você escolheu Suporte.",
+		})
 
-		err = sqlStatement.Scan(&products.ID, &products.Name, &products.Price)
+	case "2":
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "Você escolheu Produtos.",
+		})
 
-		fmt.Printf("%d\t%s\t%s \n", products.ID, products.Name, products.Price)
+	case "3":
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "Você escolheu Atendente.",
+		})
 
+	default:
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "Escolha uma das opções:\n1 - Suporte\n2 - Produtos\n3 - Atendente",
+		})
+	}
+}
+
+func processUpdate(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update.Message != nil {
+		// Enviar mensagem de boas-vindas apenas uma vez por chatID
+		chatID := update.Message.Chat.ID
+		if update.Message.Text == "1" || update.Message.Text == "2" || update.Message.Text == "3" {
+			handlerResponse(ctx, b, update)
+		} else {
+			sendWelcomeMessage(ctx, b, chatID)
+		}
 	}
 }
