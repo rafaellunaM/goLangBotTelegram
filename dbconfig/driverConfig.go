@@ -3,6 +3,8 @@ package dbconfig
 import (
 	"fmt"
 	"os"
+	_ "github.com/lib/pq"
+
 )
 
 type Article struct {
@@ -14,11 +16,11 @@ type Article struct {
 var (
 	PostgresDriver = "postgres"
 
-	User     = getEnv("DB_USER", "user")
-	Password = getEnv("DB_PASSWORD", "pass")
-	DbName   = getEnv("DB_NAME", "db")
+	User     = getEnv("DB_USER", "bot")
+	Password = getEnv("DB_PASSWORD", "bot")
+	DbName   = getEnv("DB_NAME", "bot")
 	Host     = getEnv("DB_HOST", "localhost")
-	Port     = getEnv("DB_PORT", "9999")
+	Port     = getEnv("DB_PORT", "5432")
 
 	TableName = "products"
 )
