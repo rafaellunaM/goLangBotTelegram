@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 
+	"botTelegram/crud"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"github.com/joho/godotenv"
@@ -58,15 +60,30 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 		})
 
 	case "2":
+		products, err := crud.GetProducts()
+		if err != nil {
+            log.Printf("Erro ao buscar produtos: %v", err)
+            b.SendMessage(ctx, &bot.SendMessageParams{
+                ChatID: update.Message.Chat.ID,
+                Text:  "Erro ao buscar produtos.",
+            })
+            return
+        }
+
+		var productList string
+		for _, product := range products {
+			productList += fmt.Sprintf("%s: R$%.2f\n", product.Name, product.Price)
+		}
+
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   "Você escolheu Produtos.",
+			Text:   "Lista de Produtos:\n" + productList,
 		})
 
 	case "3":
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   "Você escolheu Atendente.",
+			Text:   "Por favor, nos fale o seu pedido para que possamos atender com mais rapidez. Aguarde um momento que um de nossos atendentes irá lhe ajudar em breve.",
 		})
 
 	default:
