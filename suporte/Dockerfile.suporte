@@ -1,0 +1,13 @@
+FROM golang:1.22
+
+WORKDIR /app
+
+COPY . .
+RUN go mod download && go mod verify
+RUN go get github.com/joho/godotenv
+
+RUN go build -v -o ./app/main.go
+
+EXPOSE 6060
+
+CMD ["./app/main.go"]

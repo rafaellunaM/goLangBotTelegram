@@ -8,6 +8,7 @@ import (
 	"os/signal"
 
 	"botTelegram/crud"
+
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"github.com/joho/godotenv"
@@ -62,13 +63,13 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 	case "2":
 		products, err := crud.GetProducts()
 		if err != nil {
-            log.Printf("Erro ao buscar produtos: %v", err)
-            b.SendMessage(ctx, &bot.SendMessageParams{
-                ChatID: update.Message.Chat.ID,
-                Text:  "Erro ao buscar produtos.",
-            })
-            return
-        }
+			log.Printf("Erro ao buscar produtos: %v", err)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.Message.Chat.ID,
+				Text:   "Erro ao buscar produtos.",
+			})
+			return
+		}
 
 		var productList string
 		for _, product := range products {
