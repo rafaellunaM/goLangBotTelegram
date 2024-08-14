@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 
@@ -52,20 +54,51 @@ func sendWelcomeMessage(ctx context.Context, b *bot.Bot, chatID int64) {
 
 func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 	answer := update.Message.Text
+	chatID := update.Message.Chat.ID
 
 	switch answer {
 	case "1":
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.Message.Chat.ID,
-			Text:   "Você escolheu Suporte.",
+		url := "http://localhost:6060"
+
+		resp, err := http.Get(url)
+		if err != nil {
+			log.Printf("Erro ao fazer requisição GET para %s: %v", url, err)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: chatID,
+				Text:   "Erro ao acessar o endpoint de suporte.",
+			})
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("Erro ao ler a resposta do endpoint: %v", err)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: chatID,
+				Text:   "Erro ao ler a resposta do endpoint de suporte.",
+			})
+			return
+		}
+
+		message := fmt.Sprintf("endpoint: %s", string(body))
+
+		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID:    chatID,
+			Text:      message,
+			ParseMode: "HTML",
 		})
+
+		if err != nil {
+			log.Printf("Erro ao enviar mensagem: %v", err)
+		}
 
 	case "2":
 		products, err := crud.GetProducts()
 		if err != nil {
 			log.Printf("Erro ao buscar produtos: %v", err)
 			b.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID: update.Message.Chat.ID,
+				ChatID: chatID,
 				Text:   "Erro ao buscar produtos.",
 			})
 			return
@@ -77,19 +110,19 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 		}
 
 		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.Message.Chat.ID,
+			ChatID: chatID,
 			Text:   "Lista de Produtos:\n" + productList,
 		})
 
 	case "3":
 		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.Message.Chat.ID,
+			ChatID: chatID,
 			Text:   "Por favor, nos fale o seu pedido para que possamos atender com mais rapidez. Aguarde um momento que um de nossos atendentes irá lhe ajudar em breve.",
 		})
 
 	default:
 		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.Message.Chat.ID,
+			ChatID: chatID,
 			Text:   "Escolha uma das opções:\n1 - Suporte\n2 - Produtos\n3 - Atendente",
 		})
 	}
@@ -97,7 +130,6 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 func processUpdate(ctx context.Context, b *bot.Bot, update *models.Update) {
 	if update.Message != nil {
-		// Enviar mensagem de boas-vindas apenas uma vez por chatID
 		chatID := update.Message.Chat.ID
 		if update.Message.Text == "1" || update.Message.Text == "2" || update.Message.Text == "3" {
 			handlerResponse(ctx, b, update)

@@ -29,3 +29,6 @@ example: toke_telegram=bottoken
 
 # Build image dockerfile por modulo
     docker build -f Dockerfile.suporte -t my-suporte-image .
+
+# Executar container
+    docker run -p 6060:6060 my-suporte-image
