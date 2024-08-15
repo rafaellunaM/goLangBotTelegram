@@ -58,20 +58,46 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 	switch answer {
 	case "1":
-		url := "http://localhost:6060"
+		urlHello := "http://localhost:6060"
+		urlPergunta := "http://localhost:6060/pergunta"
+		urlAguarde := "http://localhost:6060/aguarde"
 
-		resp, err := http.Get(url)
+		hello, err := http.Get(urlHello)
+		request, err := http.Get(urlPergunta)
+		wait, err := http.Get(urlAguarde)
+
 		if err != nil {
-			log.Printf("Erro ao fazer requisição GET para %s: %v", url, err)
+			log.Printf("Erro ao fazer requisição GET para %s: %v", urlHello, err)
 			b.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID: chatID,
 				Text:   "Erro ao acessar o endpoint de suporte.",
 			})
 			return
 		}
-		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("Erro ao fazer requisição GET para %s: %v", urlPergunta, err)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: chatID,
+				Text:   "Erro ao acessar o endpoint de suporte.",
+			})
+			return
+		}
+
+		if err != nil {
+			log.Printf("Erro ao fazer requisição GET para %s: %v", urlAguarde, err)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: chatID,
+				Text:   "Erro ao acessar o endpoint de suporte.",
+			})
+			return
+		}
+
+		defer hello.Body.Close()
+		defer request.Body.Close()
+		defer wait.Body.Close()
+
+		helloBody, err := ioutil.ReadAll(hello.Body)
 		if err != nil {
 			log.Printf("Erro ao ler a resposta do endpoint: %v", err)
 			b.SendMessage(ctx, &bot.SendMessageParams{
@@ -81,17 +107,23 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 			return
 		}
 
-		message := fmt.Sprintf("endpoint: %s", string(body))
+		messageHello := fmt.Sprintf("sd_bot: %s", string(helloBody))
 
 		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID:    chatID,
-			Text:      message,
+			Text:      messageHello,
 			ParseMode: "HTML",
 		})
 
 		if err != nil {
 			log.Printf("Erro ao enviar mensagem: %v", err)
 		}
+
+		requestBody, err := ioutil.ReadAll(request.Body)
+		messageRequest := fmt.Sprintf("sd_bot: %s", string(requestBody))
+
+		waitBody, err := ioutil.ReadAll(wait.Body)
+		messageWait := fmt.Sprintf("sd_bot: %s", string(waitBody))
 
 	case "2":
 		products, err := crud.GetProducts()
