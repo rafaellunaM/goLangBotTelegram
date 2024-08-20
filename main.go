@@ -60,104 +60,16 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 	answer := update.Message.Text
 	chatID := update.Message.Chat.ID
 
-	switch answer {
-	case "1":
-		urlHello := "http://localhost:6060"
-		urlPergunta := "http://localhost:6060/pergunta"
-		urlAguarde := "http://localhost:6060/aguarde"
-		update.Message.Text = ""
+	state := getUserStates(chatID)
 
-		hello, err := http.Get(urlHello)
-		request, err := http.Get(urlPergunta)
-		wait, err := http.Get(urlAguarde)
-
-		//state := getUserStates(chatID)
-
-		if err != nil {
-			log.Printf("Erro ao fazer requisição GET para %s: %v", urlHello, err)
-			b.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID: chatID,
-				Text:   "Erro ao acessar o endpoint de suporte.",
-			})
-			return
-		}
-
-		helloBody, err := ioutil.ReadAll(hello.Body)
-		if err != nil {
-			log.Printf("Erro ao ler a resposta do endpoint: %v", err)
-			b.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID: chatID,
-				Text:   "Erro ao ler a resposta do endpoint de suporte.",
-			})
-			return
-		}
-
-		messageHello := fmt.Sprintf("sd_bot: %s", string(helloBody))
-
-		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID:    chatID,
-			Text:      messageHello,
-			ParseMode: "HTML",
-		})
-
-		if err != nil {
-			log.Printf("Erro ao enviar mensagem: %v", err)
-		}
-
-		setUserState(chatID, "awaiting_username")
-		defer hello.Body.Close()
-
-		if err != nil {
-			log.Printf("Erro ao fazer requisição GET para %s: %v", urlPergunta, err)
-			b.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID: chatID,
-				Text:   "Erro ao acessar o endpoint de suporte.",
-			})
-			return
-		}
-		if userStates[chatID] == "awaiting_username" {
-			requestBody, err := ioutil.ReadAll(request.Body)
-			messageRequest := fmt.Sprintf("sd_bot: %s", string(requestBody))
-
-			_, err = b.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID:    chatID,
-				Text:      messageRequest,
-				ParseMode: "HTML",
-			})
-
-			if err != nil {
-				log.Printf("Erro ao enviar mensagem: %v", err)
-			}
-			defer request.Body.Close()
-
-			if err != nil {
-				log.Printf("Erro ao fazer requisição GET para %s: %v", urlAguarde, err)
-				b.SendMessage(ctx, &bot.SendMessageParams{
-					ChatID: chatID,
-					Text:   "Erro ao acessar o endpoint de suporte.",
-				})
-				return
-			}
-
-		}
-		setUserState(chatID, "awaiting_issues")
-		if userStates[chatID] == "awaiting_issues" {
-			waitBody, err := ioutil.ReadAll(wait.Body)
-			messageWait := fmt.Sprintf("sd_bot: %s", string(waitBody))
-
-			_, err = b.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID:    chatID,
-				Text:      messageWait,
-				ParseMode: "HTML",
-			})
-			if err != nil {
-				log.Printf("Erro ao enviar mensagem: %v", err)
-			}
-			defer wait.Body.Close()
-
-		}
-
-	case "2":
+	switch {
+	case answer == "1" && state == "":
+		hanlderHelloUser(ctx, b, chatID)
+	case state == "awaiting_username":
+		handlerUserName(ctx, b, chatID, answer)
+	case state == "awaiting_issues":
+		handlerIssues(ctx, b, chatID)
+	case answer == "2":
 		products, err := crud.GetProducts()
 		if err != nil {
 			log.Printf("Erro ao buscar produtos: %v", err)
@@ -178,7 +90,7 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 			Text:   "Lista de Produtos:\n" + productList,
 		})
 
-	case "3":
+	case answer == "3":
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
 			Text:   "Por favor, nos fale o seu pedido para que possamos atender com mais rapidez. Aguarde um momento que um de nossos atendentes irá lhe ajudar em breve.",
@@ -213,4 +125,113 @@ func getUserStates(chatID int64) string {
 	mu.Lock()
 	defer mu.Unlock()
 	return userStates[chatID]
+}
+
+func hanlderHelloUser(ctx context.Context, b *bot.Bot, chatID int64) {
+	urlHello := "http://localhost:6060"
+	hello, err := http.Get(urlHello)
+	helloBody, err := ioutil.ReadAll(hello.Body)
+	if err != nil {
+		log.Printf("Erro ao fazer requisição GET para %s: %v", urlHello, err)
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "Erro ao acessar o endpoint de suporte.",
+		})
+		return
+	}
+
+	if err != nil {
+		log.Printf("Erro ao ler a resposta do endpoint: %v", err)
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "Erro ao ler a resposta do endpoint de suporte.",
+		})
+		return
+	}
+
+	messageHello := fmt.Sprintf("sd_bot: %s", string(helloBody))
+
+	_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID:    chatID,
+		Text:      messageHello,
+		ParseMode: "HTML",
+	})
+	defer hello.Body.Close()
+
+	if err != nil {
+		log.Printf("Erro ao enviar mensagem: %v", err)
+	}
+	setUserState(chatID, "awaiting_username")
+}
+
+func handlerUserName(ctx context.Context, b *bot.Bot, chatID int64, username string) {
+	urlPergunta := "http://localhost:6060/pergunta"
+	request, err := http.Get(urlPergunta)
+	requestBody, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		log.Printf("Erro ao fazer requisição GET para %s: %v", urlPergunta, err)
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "Erro ao acessar o endpoint de suporte.",
+		})
+		return
+	}
+	defer request.Body.Close()
+
+	if err != nil {
+		log.Printf("Erro ao ler a resposta do endpoint: %v", err)
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "Erro ao ler a resposta do endpoint de suporte.",
+		})
+		return
+	}
+
+	messageRequest := fmt.Sprintf("sd_bot: %s", string(requestBody))
+
+	_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID:    chatID,
+		Text:      messageRequest,
+		ParseMode: "HTML",
+	})
+
+	if err != nil {
+		log.Printf("Erro ao enviar mensagem: %v", err)
+	}
+	setUserState(chatID, "awaiting_issues")
+}
+
+func handlerIssues(ctx context.Context, b *bot.Bot, chatID int64) {
+	urlAguarde := "http://localhost:6060/aguarde"
+	wait, err := http.Get(urlAguarde)
+	waitBody, err := ioutil.ReadAll(wait.Body)
+	if err != nil {
+		log.Printf("Erro ao fazer requisição GET para %s: %v", urlAguarde, err)
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "Erro ao acessar o endpoint de suporte.",
+		})
+		return
+	}
+	defer wait.Body.Close()
+
+	messageWait := fmt.Sprintf("sd_bot: %s", string(waitBody))
+	if err != nil {
+		log.Printf("Erro ao ler a resposta do endpoint: %v", err)
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "Erro ao ler a resposta do endpoint de suporte.",
+		})
+		return
+	}
+
+	_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID:    chatID,
+		Text:      messageWait,
+		ParseMode: "HTML",
+	})
+	if err != nil {
+		log.Printf("Erro ao enviar mensagem: %v", err)
+	}
+	setUserState(chatID, "complete")
 }
