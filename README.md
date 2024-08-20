@@ -32,3 +32,11 @@ example: toke_telegram=bottoken
 
 # Executar container
     docker run -p 6060:6060 my-suporte-image
+
+# Tree
+├───atendente  atendente module
+├───crud - file go to crud
+├───dbconfig - file go to connect with db
+├───produtos -  produtos module
+├───suporte - handlers to suporte api
+└───suporte_api - module api 
