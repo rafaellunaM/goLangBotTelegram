@@ -34,7 +34,7 @@ func main() {
 
 	botToken := os.Getenv("toke_telegram")
 	if botToken == "" {
-		log.Fatal("A variável de ambiente 'toke_telegram' não está definido")
+		log.Fatal("A variável de ambiente 'toke_telegram' não está definida")
 	}
 
 	b, err := bot.New(botToken, opts...)
@@ -70,37 +70,14 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 	case state == "awaiting_issues":
 		handlerIssues(ctx, b, chatID)
 	case answer == "2":
-		products, err := crud.GetProducts()
-		if err != nil {
-			log.Printf("Erro ao buscar produtos: %v", err)
-			b.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID: chatID,
-				Text:   "Erro ao buscar produtos.",
-			})
-			return
-		}
-
-		var productList string
-		for _, product := range products {
-			productList += fmt.Sprintf("%s: R$%.2f\n", product.Name, product.Price)
-		}
-
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: chatID,
-			Text:   "Lista de Produtos:\n" + productList,
-		})
-
+		handleProducts(ctx, b, chatID)
 	case answer == "3":
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
 			Text:   "Por favor, nos fale o seu pedido para que possamos atender com mais rapidez. Aguarde um momento que um de nossos atendentes irá lhe ajudar em breve.",
 		})
-
 	default:
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: chatID,
-			Text:   "Escolha uma das opções:\n1 - Suporte\n2 - Produtos\n3 - Atendente",
-		})
+		sendWelcomeMessage(ctx, b, chatID)
 	}
 }
 
@@ -146,13 +123,11 @@ func hanlderHelloUser(ctx context.Context, b *bot.Bot, chatID int64) {
 	}
 
 	messageHello := fmt.Sprintf("sd_bot: %s", string(helloBody))
-
 	_, err = b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID:    chatID,
 		Text:      messageHello,
 		ParseMode: "HTML",
 	})
-
 	if err != nil {
 		log.Printf("Erro ao enviar mensagem: %v", err)
 	}
@@ -162,7 +137,6 @@ func hanlderHelloUser(ctx context.Context, b *bot.Bot, chatID int64) {
 func handlerUserName(ctx context.Context, b *bot.Bot, chatID int64, username string) {
 	urlPergunta := "http://localhost:6060/pergunta"
 	request, err := http.Get(urlPergunta)
-
 	if err != nil {
 		log.Printf("Erro ao fazer requisição GET para %s: %v", urlPergunta, err)
 		b.SendMessage(ctx, &bot.SendMessageParams{
@@ -184,13 +158,11 @@ func handlerUserName(ctx context.Context, b *bot.Bot, chatID int64, username str
 	}
 
 	messageRequest := fmt.Sprintf("sd_bot: %s", string(requestBody))
-
 	_, err = b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID:    chatID,
 		Text:      messageRequest,
 		ParseMode: "HTML",
 	})
-
 	if err != nil {
 		log.Printf("Erro ao enviar mensagem: %v", err)
 	}
@@ -200,7 +172,6 @@ func handlerUserName(ctx context.Context, b *bot.Bot, chatID int64, username str
 func handlerIssues(ctx context.Context, b *bot.Bot, chatID int64) {
 	urlAguarde := "http://localhost:6060/aguarde"
 	wait, err := http.Get(urlAguarde)
-
 	if err != nil {
 		log.Printf("Erro ao fazer requisição GET para %s: %v", urlAguarde, err)
 		b.SendMessage(ctx, &bot.SendMessageParams{
@@ -231,4 +202,26 @@ func handlerIssues(ctx context.Context, b *bot.Bot, chatID int64) {
 		log.Printf("Erro ao enviar mensagem: %v", err)
 	}
 	setUserState(chatID, "complete")
+}
+
+func handleProducts(ctx context.Context, b *bot.Bot, chatID int64) {
+	products, err := crud.GetProducts()
+	if err != nil {
+		log.Printf("Erro ao buscar produtos: %v", err)
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "Erro ao buscar produtos.",
+		})
+		return
+	}
+
+	var productList string
+	for _, product := range products {
+		productList += fmt.Sprintf("%s: R$%.2f\n", product.Name, product.Price)
+	}
+
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: chatID,
+		Text:   "Lista de Produtos:\n" + productList,
+	})
 }
