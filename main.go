@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 
 	"botTelegram/crud"
 
@@ -15,6 +16,9 @@ import (
 	"github.com/go-telegram/bot/models"
 	"github.com/joho/godotenv"
 )
+
+var userStates = make(map[int64]string)
+var mu sync.Mutex
 
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -61,10 +65,13 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 		urlHello := "http://localhost:6060"
 		urlPergunta := "http://localhost:6060/pergunta"
 		urlAguarde := "http://localhost:6060/aguarde"
+		update.Message.Text = ""
 
 		hello, err := http.Get(urlHello)
 		request, err := http.Get(urlPergunta)
 		wait, err := http.Get(urlAguarde)
+
+		//state := getUserStates(chatID)
 
 		if err != nil {
 			log.Printf("Erro ao fazer requisição GET para %s: %v", urlHello, err)
@@ -74,28 +81,6 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 			})
 			return
 		}
-
-		if err != nil {
-			log.Printf("Erro ao fazer requisição GET para %s: %v", urlPergunta, err)
-			b.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID: chatID,
-				Text:   "Erro ao acessar o endpoint de suporte.",
-			})
-			return
-		}
-
-		if err != nil {
-			log.Printf("Erro ao fazer requisição GET para %s: %v", urlAguarde, err)
-			b.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID: chatID,
-				Text:   "Erro ao acessar o endpoint de suporte.",
-			})
-			return
-		}
-
-		defer hello.Body.Close()
-		defer request.Body.Close()
-		defer wait.Body.Close()
 
 		helloBody, err := ioutil.ReadAll(hello.Body)
 		if err != nil {
@@ -119,11 +104,58 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 			log.Printf("Erro ao enviar mensagem: %v", err)
 		}
 
-		requestBody, err := ioutil.ReadAll(request.Body)
-		messageRequest := fmt.Sprintf("sd_bot: %s", string(requestBody))
+		setUserState(chatID, "awaiting_username")
+		defer hello.Body.Close()
 
-		waitBody, err := ioutil.ReadAll(wait.Body)
-		messageWait := fmt.Sprintf("sd_bot: %s", string(waitBody))
+		if err != nil {
+			log.Printf("Erro ao fazer requisição GET para %s: %v", urlPergunta, err)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: chatID,
+				Text:   "Erro ao acessar o endpoint de suporte.",
+			})
+			return
+		}
+		if userStates[chatID] == "awaiting_username" {
+			requestBody, err := ioutil.ReadAll(request.Body)
+			messageRequest := fmt.Sprintf("sd_bot: %s", string(requestBody))
+
+			_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID:    chatID,
+				Text:      messageRequest,
+				ParseMode: "HTML",
+			})
+
+			if err != nil {
+				log.Printf("Erro ao enviar mensagem: %v", err)
+			}
+			defer request.Body.Close()
+
+			if err != nil {
+				log.Printf("Erro ao fazer requisição GET para %s: %v", urlAguarde, err)
+				b.SendMessage(ctx, &bot.SendMessageParams{
+					ChatID: chatID,
+					Text:   "Erro ao acessar o endpoint de suporte.",
+				})
+				return
+			}
+
+		}
+		setUserState(chatID, "awaiting_issues")
+		if userStates[chatID] == "awaiting_issues" {
+			waitBody, err := ioutil.ReadAll(wait.Body)
+			messageWait := fmt.Sprintf("sd_bot: %s", string(waitBody))
+
+			_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID:    chatID,
+				Text:      messageWait,
+				ParseMode: "HTML",
+			})
+			if err != nil {
+				log.Printf("Erro ao enviar mensagem: %v", err)
+			}
+			defer wait.Body.Close()
+
+		}
 
 	case "2":
 		products, err := crud.GetProducts()
@@ -169,4 +201,16 @@ func processUpdate(ctx context.Context, b *bot.Bot, update *models.Update) {
 			sendWelcomeMessage(ctx, b, chatID)
 		}
 	}
+}
+
+func setUserState(chatID int64, state string) {
+	mu.Lock()
+	defer mu.Unlock()
+	userStates[chatID] = state
+}
+
+func getUserStates(chatID int64) string {
+	mu.Lock()
+	defer mu.Unlock()
+	return userStates[chatID]
 }
