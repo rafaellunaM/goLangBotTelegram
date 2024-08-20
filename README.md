@@ -13,3 +13,30 @@ http://localhost:8080
 
 create .env file with key toke_telegram and value bot token
 example: toke_telegram=bottoken
+
+# Hello
+    Port: 8080
+
+# Produtos
+    Port: 7070
+
+# Suporte
+    Port: 6060
+
+# Criando novo package
+    go mod init  <package-name>
+    go mod tidy
+
+# Build image dockerfile por modulo
+    docker build -f Dockerfile.suporte -t my-suporte-image .
+
+# Executar container
+    docker run -p 6060:6060 my-suporte-image
+
+# Tree
+├───atendente  atendente module
+├───crud - file go to crud
+├───dbconfig - file go to connect with db
+├───produtos -  produtos module
+├───suporte - handlers to suporte api
+└───suporte_api - module api 
