@@ -13,6 +13,14 @@ services:
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  suporte_api:
+    build:
+      context: ./suporte_api
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "6060:6060"
+
 networks:
   network:
     driver: bridge
