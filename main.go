@@ -92,7 +92,7 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 		userResponses[chatID] = UserData{Name: userResponses[chatID].Name, CPF: userResponses[chatID].CPF, Phone: userResponses[chatID].Phone, Issues: answer}
 		suporte.HandlerIssues(ctx, b, chatID)
 		userData := userResponses[chatID]
-		log.Printf("Dados do usuário %d: Nome= %s, CPF= %s, Telefone %s, Problema=%s", chatID, userData.Name, userData.CPF, userData.Phone, userData.Issues)
+		log.Printf("Dados do usuário %d: Nome= %s, CPF= %s, Telefone= %s, Problema= %s", chatID, userData.Name, userData.CPF, userData.Phone, userData.Issues)
 
 		crud.SetUsers(userResponses[chatID].CPF, userResponses[chatID].Name, userResponses[chatID].Phone, userResponses[chatID].Issues)
 

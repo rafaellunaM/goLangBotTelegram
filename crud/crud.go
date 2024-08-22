@@ -131,9 +131,18 @@ func GetIssues() ([]dbConfig.Issues, error) {
 }
 
 func SetUsers(cpf string, name string, phone string, issues string) {
-	insertMessageSQL := `INSERT INTO users (chat_id, text) VALUES ($1, $2)`
-	_, err := db.Exec(insertMessageSQL, cpf, name, phone)
+
+	acessDatabase()
+	insertUser := `INSERT INTO users (cpf, name, phone) VALUES ($1, $2, $3)`
+	_, err := db.Exec(insertUser, cpf, name, phone)
 	if err != nil {
 		log.Printf("Erro ao salvar a mensagem no banco de dados: %v", err)
 	}
+
+	insertIssues := `INSERT INTO issues (issues, cpf) VALUES ($1, $2);`
+	_, err = db.Exec(insertIssues, issues, cpf)
+	if err != nil {
+		log.Printf("Erro ao salvar a mensagem no banco de dados: %v", err)
+	}
+
 }
