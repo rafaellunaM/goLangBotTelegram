@@ -1,5 +1,5 @@
 ---
-#example api yaml
+# example api yaml
   api:
     context: .
     dockerfile: Dockerfile
@@ -12,7 +12,7 @@
     ports:
       - "8080:8080"
 ---
-#example db yaml
+# example db yaml
   db:
     image: postgres
     restart: always
@@ -24,3 +24,12 @@
       - "5432:5432"
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+---
+# example suporte_api yaml]
+  suporte_api:
+    build:
+      context: ./suporte_api
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "6060:6060"
