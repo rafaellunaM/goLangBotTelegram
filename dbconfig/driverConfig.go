@@ -3,14 +3,25 @@ package dbconfig
 import (
 	"fmt"
 	"os"
-	_ "github.com/lib/pq"
 
+	_ "github.com/lib/pq"
 )
 
 type Article struct {
 	ID    int
 	Name  string
 	Price float32
+}
+
+type Users struct {
+	Name  string
+	Cpf   string
+	Phone string
+}
+
+type Issues struct {
+	Name string
+	Cpf  string
 }
 
 var (
@@ -22,7 +33,9 @@ var (
 	Host     = getEnv("DB_HOST", "localhost")
 	Port     = getEnv("DB_PORT", "5432")
 
-	TableName = "products"
+	TableName   = "products"
+	TableUser   = "users"
+	TableIssues = "issues"
 )
 
 func getEnv(key, defaultValue string) string {
