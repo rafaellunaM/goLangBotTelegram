@@ -6,7 +6,7 @@ docker-compose up --build -d
 # down:
 docker-compose down
 
-# Connection in browser
+# Connection in browser main_api
 http://localhost:8080
 
 # Telegram token 
@@ -14,24 +14,33 @@ http://localhost:8080
 create .env file with key toke_telegram and value bot token
 example: toke_telegram=bottoken
 
-# Hello
+# api_main
     Port: 8080
 
-# Produtos
+# api_Produtos
     Port: 7070
 
-# Suporte
+# api_Suporte
     Port: 6060
+    http://localhost:6060/
+    http://localhost:6060/cpf
+    http://localhost:6060/telefone
+    http://localhost:6060/pergunta
+
 
 # Criando novo package
     go mod init  <package-name>
     go mod tidy
+
+# build image
+    docker build -f Dockerfile.suporte -t suporte-api:1.0 .
 
 # Build image dockerfile por modulo
     docker build -f Dockerfile.suporte -t my-suporte-image .
 
 # Executar container
     docker run -p 6060:6060 my-suporte-image
+    docker run -d -p 6060:6060 --name suporte-api-container suporte-api:1.0
 
 # Tree
 ├───atendente  atendente module

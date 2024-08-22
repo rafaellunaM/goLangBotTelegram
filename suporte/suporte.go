@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"sync"
 
@@ -19,6 +20,22 @@ var mu sync.Mutex
 var nameRegex = regexp.MustCompile(`^[A-Za-z\s]+$`)
 var numberRegex = regexp.MustCompile(`^\d+$`)
 var cpfRegex = regexp.MustCompile(`^\d+$`)
+
+func getEnv(key, defaultValue string) string {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue
+	}
+	return value
+}
+
+var (
+	root     = getEnv("SUPORTE_API_ROOT", "http://localhost:6060")
+	cpf      = getEnv("SUPORTE_API_CPF", "http://localhost:6060/cpf")
+	telefone = getEnv("SUPORTE_API_TELEFONE", "http://localhost:6060/telefone")
+	pergunta = getEnv("SUPORTE_API_PERGUTNA", "http://localhost:6060/pergunta")
+	aguarde  = getEnv("SUPORTE_API_AGUARDE", "http://localhost:6060/aguarde")
+)
 
 func NameTratment(awnser string) bool {
 
@@ -57,10 +74,9 @@ func CpfTratmnet(cpf string) bool {
 }
 
 func HanlderHelloUser(ctx context.Context, b *bot.Bot, chatID int64) {
-	urlHello := "http://localhost:6060"
-	hello, err := http.Get(urlHello)
+	hello, err := http.Get(root)
 	if err != nil {
-		log.Printf("Erro ao fazer requisição GET para %s: %v", urlHello, err)
+		log.Printf("Erro ao fazer requisição GET para %s: %v", root, err)
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
 			Text:   "Erro ao acessar o endpoint de suporte.",
@@ -93,10 +109,9 @@ func HanlderHelloUser(ctx context.Context, b *bot.Bot, chatID int64) {
 }
 
 func HandlerUserName(ctx context.Context, b *bot.Bot, chatID int64, username string) {
-	urlPhone := "http://localhost:6060/cpf"
-	request, err := http.Get(urlPhone)
+	request, err := http.Get(cpf)
 	if err != nil {
-		log.Printf("Erro ao fazer requisição GET para %s: %v", urlPhone, err)
+		log.Printf("Erro ao fazer requisição GET para %s: %v", cpf, err)
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
 			Text:   "Erro ao acessar o endpoint de suporte.",
@@ -128,10 +143,9 @@ func HandlerUserName(ctx context.Context, b *bot.Bot, chatID int64, username str
 	SetUserState(chatID, "awaiting_cpf")
 }
 func HandlerUserCpf(ctx context.Context, b *bot.Bot, chatID int64, phone string) {
-	urltelefone := "http://localhost:6060/telefone"
-	request, err := http.Get(urltelefone)
+	request, err := http.Get(telefone)
 	if err != nil {
-		log.Printf("Erro ao fazer requisição GET para %s: %v", urltelefone, err)
+		log.Printf("Erro ao fazer requisição GET para %s: %v", telefone, err)
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
 			Text:   "Erro ao acessar o endpoint de suporte.",
@@ -163,10 +177,9 @@ func HandlerUserCpf(ctx context.Context, b *bot.Bot, chatID int64, phone string)
 	SetUserState(chatID, "awaiting_phone")
 }
 func HandlerUserPhone(ctx context.Context, b *bot.Bot, chatID int64, phone string) {
-	urlPergunta := "http://localhost:6060/pergunta"
-	request, err := http.Get(urlPergunta)
+	request, err := http.Get(pergunta)
 	if err != nil {
-		log.Printf("Erro ao fazer requisição GET para %s: %v", urlPergunta, err)
+		log.Printf("Erro ao fazer requisição GET para %s: %v", pergunta, err)
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
 			Text:   "Erro ao acessar o endpoint de suporte.",
@@ -199,10 +212,9 @@ func HandlerUserPhone(ctx context.Context, b *bot.Bot, chatID int64, phone strin
 }
 
 func HandlerIssues(ctx context.Context, b *bot.Bot, chatID int64) {
-	urlAguarde := "http://localhost:6060/aguarde"
-	wait, err := http.Get(urlAguarde)
+	wait, err := http.Get(aguarde)
 	if err != nil {
-		log.Printf("Erro ao fazer requisição GET para %s: %v", urlAguarde, err)
+		log.Printf("Erro ao fazer requisição GET para %s: %v", aguarde, err)
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
 			Text:   "Erro ao acessar o endpoint de suporte.",
