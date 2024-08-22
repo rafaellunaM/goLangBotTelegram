@@ -16,6 +16,14 @@ func main() {
 		c.String(200, "Seja bem-vindo! Por favor, digite seu nome.")
 	})
 
+	r.GET("/cpf", func(c *gin.Context) {
+		c.String(200, "digite seu cpf.")
+	})
+
+	r.GET("/telefone", func(c *gin.Context) {
+		c.String(200, "digite seu telefone.")
+	})
+
 	r.GET("/pergunta", func(c *gin.Context) {
 		c.String(200, "Por favor, digite o seu problema.")
 	})

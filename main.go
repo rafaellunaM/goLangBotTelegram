@@ -57,19 +57,45 @@ func processUpdate(ctx context.Context, b *bot.Bot, update *models.Update) {
 	}
 }
 
+type UserData struct {
+	Name   string
+	CPF    string
+	Phone  string
+	Issues string
+}
+
+var userResponses = make(map[int64]UserData)
+
 func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 	answer := update.Message.Text
 	chatID := update.Message.Chat.ID
+
+	if _, ok := userResponses[chatID]; !ok {
+		userResponses[chatID] = UserData{}
+	}
 
 	state := suporte.GetUserStates(chatID)
 
 	switch {
 	case answer == "1" && state == "":
 		suporte.HanlderHelloUser(ctx, b, chatID)
-	case state == "awaiting_username":
+	case state == "awaiting_username" && suporte.NameTratment(answer) != false:
+		userResponses[chatID] = UserData{Name: answer, CPF: userResponses[chatID].CPF, Phone: userResponses[chatID].Phone}
 		suporte.HandlerUserName(ctx, b, chatID, answer)
+	case state == "awaiting_cpf" && suporte.CpfTratmnet(answer) != false:
+		userResponses[chatID] = UserData{Name: userResponses[chatID].Name, CPF: answer, Phone: userResponses[chatID].Phone}
+		suporte.HandlerUserCpf(ctx, b, chatID, answer)
+	case state == "awaiting_phone" && suporte.PhoneTratmnet(answer) != false:
+		userResponses[chatID] = UserData{Name: userResponses[chatID].Name, CPF: userResponses[chatID].CPF, Phone: answer}
+		suporte.HandlerUserPhone(ctx, b, chatID, answer)
 	case state == "awaiting_issues":
+		userResponses[chatID] = UserData{Name: userResponses[chatID].Name, CPF: userResponses[chatID].CPF, Phone: userResponses[chatID].Phone, Issues: answer}
 		suporte.HandlerIssues(ctx, b, chatID)
+		userData := userResponses[chatID]
+		log.Printf("Dados do usuário %d: Nome= %s, CPF= %s, Telefone= %s, Problema= %s", chatID, userData.Name, userData.CPF, userData.Phone, userData.Issues)
+
+		crud.SetUsers(userResponses[chatID].CPF, userResponses[chatID].Name, userResponses[chatID].Phone, userResponses[chatID].Issues)
+
 	case answer == "2":
 		products, err := crud.GetProducts()
 		if err != nil {
@@ -100,7 +126,7 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 	default:
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
-			Text:   "Escolha uma das opções:\n1 - Suporte\n2 - Produtos\n3 - Atendente",
+			Text:   "Escolha uma das opções novamente:\n1 - Suporte\n2 - Produtos\n3 - Atendente\n ou digite a resposta da pergunta anterior corretamente",
 		})
 	}
 }
