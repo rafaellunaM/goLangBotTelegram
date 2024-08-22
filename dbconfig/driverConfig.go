@@ -30,7 +30,7 @@ var (
 	User     = getEnv("DB_USER", "bot")
 	Password = getEnv("DB_PASSWORD", "bot")
 	DbName   = getEnv("DB_NAME", "bot")
-	Host     = getEnv("DB_HOST", "localhost")
+	Host     = getEnv("DB_HOST", "db")
 	Port     = getEnv("DB_PORT", "5432")
 
 	TableName   = "products"
