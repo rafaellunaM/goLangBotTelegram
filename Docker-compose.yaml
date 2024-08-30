@@ -50,6 +50,18 @@ services:
     networks:
       - network
 
+  produtos_api:
+    depends_on:
+      - main_api
+    build:
+      context: ./produtos_api
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "7070:7070"
+    networks:
+      - network
+
 networks:
   network:
     driver: bridge

@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	"fmt"
+	//"fmt"
 	"log"
 	"os"
 	"os/signal"
 
 	"botTelegram/crud"
 	"botTelegram/suporte"
+	"botTelegram/produtos"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -96,27 +97,22 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 		crud.SetUsers(userResponses[chatID].CPF, userResponses[chatID].Name, userResponses[chatID].Phone, userResponses[chatID].Issues)
 
-	case answer == "2":
-		products, err := crud.GetProducts()
-		if err != nil {
-			log.Printf("Erro ao buscar produtos: %v", err)
-			b.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID: chatID,
-				Text:   "Erro ao buscar produtos.",
-			})
-			return
-		}
+	case answer == "2" && state == "":
+		produtos.HanlderHelloUser(ctx, b, chatID)
+	case state == "awaiting_produtos" && produtos.NameTratment(answer) != false:
+		produtos.HandlerProduto(ctx, b, chatID, answer)
+	case state == "awaiting_produto" && produtos.NameTratment(answer) != false:
+		produtos.HandlerProdutos(ctx, b, chatID, answer)
 
-		var productList string
+		/* var productList string
 		for _, product := range products {
 			productList += fmt.Sprintf("%s: R$%.2f\n", product.Name, product.Price)
-		}
+		} */
 
-		b.SendMessage(ctx, &bot.SendMessageParams{
+		/* b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
 			Text:   "Lista de Produtos:\n" + productList,
-		})
-
+		}) */
 	case answer == "3":
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
@@ -126,7 +122,7 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 	default:
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
-			Text:   "Escolha uma das opções novamente:\n1 - Suporte\n2 - Produtos\n3 - Atendente\n ou digite a resposta da pergunta anterior corretamente",
+			Text:   "Escolha uma das opções:\n1 - Suporte\n2 - Produtos\n3 - Atendente\n ou digite a resposta da pergunta anterior corretamente",
 		})
 	}
 }
