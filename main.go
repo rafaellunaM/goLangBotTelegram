@@ -8,8 +8,8 @@ import (
 	"os/signal"
 
 	"botTelegram/crud"
-	"botTelegram/suporte"
 	"botTelegram/produtos"
+	"botTelegram/suporte"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
@@ -77,6 +77,7 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 	}
 
 	state := suporte.GetUserStates(chatID)
+	teste := produtos.GetTest(chatID)
 
 	switch {
 	case answer == "1" && state == "":
@@ -98,44 +99,37 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 		crud.SetUsers(userResponses[chatID].CPF, userResponses[chatID].Name, userResponses[chatID].Phone, userResponses[chatID].Issues)
 
-	case answer == "2" && state == "":
+	case answer == "2" && teste == "":
 		produtos.HanlderHelloUser(ctx, b, chatID)
-	case state == "awaiting_answer":
+	case teste == "awaiting_answer":
 
 		products, err := crud.GetProducts()
 		if err != nil {
-            log.Printf("Erro ao buscar produtos: %v", err)
-            b.SendMessage(ctx, &bot.SendMessageParams{
-                ChatID: update.Message.Chat.ID,
-                Text:  "Erro ao buscar produtos.",
-            })
-            return
-        }
+			log.Printf("Erro ao buscar produtos: %v", err)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.Message.Chat.ID,
+				Text:   "Erro ao buscar produtos.",
+			})
+			return
+		}
 
-		var productList []string
-
-		productList[0] = fmt.Sprintf("%s: R$%.2f\n", products[0], products[1])
-
-		/* var productList string
+		var productList string
 		for _, product := range products {
 			productList += fmt.Sprintf("%s: R$%.2f\n", product.Name, product.Price)
-		} */
+		}
 
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   "Lista de Produtos:\n" + productList[0] + productList[1],
-	})
-	
-		
-		produtos.SetUserState(chatID, "")
+			Text:   "Lista de Produtos:\n" + productList,
+		})
 
-	case state == "awaiting_answer" && produtos.NameTratment(answer) == false:
+	case state == "awaiting_aluno" && produtos.NameTratment(answer) == false:
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
 			Text:   "int te fode",
 		})
-		produtos.SetUserState(chatID, "")
-	
+		produtos.SetUserTest(chatID, "")
+
 	case answer == "3":
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
