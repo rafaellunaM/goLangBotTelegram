@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	//"fmt"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -17,6 +17,7 @@ import (
 )
 
 func main() {
+	
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
@@ -99,20 +100,42 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 	case answer == "2" && state == "":
 		produtos.HanlderHelloUser(ctx, b, chatID)
-	case state == "awaiting_produtos" && produtos.NameTratment(answer) != false:
-		produtos.HandlerProduto(ctx, b, chatID, answer)
-	case state == "awaiting_produto" && produtos.NameTratment(answer) != false:
-		produtos.HandlerProdutos(ctx, b, chatID, answer)
+	case state == "awaiting_answer":
+
+		products, err := crud.GetProducts()
+		if err != nil {
+            log.Printf("Erro ao buscar produtos: %v", err)
+            b.SendMessage(ctx, &bot.SendMessageParams{
+                ChatID: update.Message.Chat.ID,
+                Text:  "Erro ao buscar produtos.",
+            })
+            return
+        }
+
+		var productList []string
+
+		productList[0] = fmt.Sprintf("%s: R$%.2f\n", products[0], products[1])
 
 		/* var productList string
 		for _, product := range products {
 			productList += fmt.Sprintf("%s: R$%.2f\n", product.Name, product.Price)
 		} */
 
-		/* b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: chatID,
-			Text:   "Lista de Produtos:\n" + productList,
-		}) */
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "Lista de Produtos:\n" + productList[0] + productList[1],
+	})
+	
+		
+		produtos.SetUserState(chatID, "")
+
+	case state == "awaiting_answer" && produtos.NameTratment(answer) == false:
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "int te fode",
+		})
+		produtos.SetUserState(chatID, "")
+	
 	case answer == "3":
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,

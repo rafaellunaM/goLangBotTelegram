@@ -243,7 +243,7 @@ func HandlerIssues(ctx context.Context, b *bot.Bot, chatID int64) {
 	if err != nil {
 		log.Printf("Erro ao enviar mensagem: %v", err)
 	}
-	SetUserState(chatID, "complete")
+	SetUserState(chatID, "")
 }
 
 func HandleProducts(ctx context.Context, b *bot.Bot, chatID int64) {

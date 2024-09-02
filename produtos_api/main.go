@@ -1,10 +1,10 @@
 package main
 import (
 	"github.com/gin-gonic/gin"
-	"botTelegram/crud"
-	"net/http"
+	//"botTelegram/crud"
+	//"net/http"
 	//"context"
-	"fmt"
+	//"fmt"
 	"log"
 	//"os"
 	//"os/signal"
@@ -25,23 +25,15 @@ func main() {
 	r.SetTrustedProxies([]string{"127.0.0.1"})
 
 	r.GET("/", func(c *gin.Context) {
-		c.String(200, "Nesta API você pode consultar nossos produtos disponíveis.")
+		c.String(200, "Você gostaria de ver os nossos produtos? digite sim ou não")
 	})
 
 	r.GET("/produtos", func(c *gin.Context) {
-		products, err := crud.GetProducts()
-		if err != nil {
-			log.Printf("Erro ao buscar produtos: %v", err)
-			c.String(http.StatusInternalServerError, "Erro ao buscar produtos.")
-			return
-		}
+		c.String(200, "Você deseja consultar todos os produtos disponíveis?")
+	})
 
-		var productList string
-		for _, product := range products {
-			productList += fmt.Sprintf("%s: R$%.2f\n", product.Name, product.Price)
-		}
-
-		c.String(http.StatusOK, "Lista de Produtos:\n"+productList)
+	r.GET("/produto", func(c *gin.Context) {
+		c.String(200, "Você deseja consultar todos os produtos disponíveis?")
 	})
 
 	if err := r.Run(":7070"); err != nil {

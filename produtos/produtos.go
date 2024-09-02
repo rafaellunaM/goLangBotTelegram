@@ -20,6 +20,15 @@ var mu sync.Mutex
 var nameRegex = regexp.MustCompile(`^[A-Za-z\s]+$`)
 var numberRegex = regexp.MustCompile(`^\d+$`)
 var cpfRegex = regexp.MustCompile(`^\d+$`)
+var re = regexp.MustCompile(`(?i)^sim$`)
+
+func AnswerTreatment(answer string) bool {
+
+	if (re.MatchString(answer)) {
+		return true
+	}
+	return false
+}
 
 func getEnv(key, defaultValue string) string {
 	value, exists := os.LookupEnv(key)
@@ -34,6 +43,7 @@ var (
 	produtos = getEnv("SUPORTE_API_PRODUTOS", "http://localhost:7070/produtos")
 	produto  = getEnv("SUPORTE_API_PRODUTO", "http://localhost:7070/produto")
 )
+
 
 func NameTratment(awnser string) bool {
 
@@ -103,7 +113,7 @@ func HanlderHelloUser(ctx context.Context, b *bot.Bot, chatID int64) {
 	if err != nil {
 		log.Printf("Erro ao enviar mensagem: %v", err)
 	}
-	SetUserState(chatID, "awaiting_produtos")
+	SetUserState(chatID, "awaiting_answer")
 }
 
 func HandlerProdutos(ctx context.Context, b *bot.Bot, chatID int64, produtos string) {
@@ -142,10 +152,10 @@ func HandlerProdutos(ctx context.Context, b *bot.Bot, chatID int64, produtos str
 
 	SetUserState(chatID, "awaiting_produto")
 }
-func HandlerProduto(ctx context.Context, b *bot.Bot, chatID int64, produtos string) {
-	request, err := http.Get(produtos)
+func HandlerProduto(ctx context.Context, b *bot.Bot, chatID int64, produto string) {
+	request, err := http.Get(produto)
 	if err != nil {
-		log.Printf("Erro ao fazer requisição GET para %s: %v", produtos, err)
+		log.Printf("Erro ao fazer requisição GET para %s: %v", produto, err)
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
 			Text:   "Erro ao acessar o endpoint de produtos.",
