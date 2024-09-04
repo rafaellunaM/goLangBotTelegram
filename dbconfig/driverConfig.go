@@ -13,6 +13,11 @@ type Article struct {
 	Price float32
 }
 
+type Order struct {
+	OrderID   string
+	ProductID string
+}
+
 type Users struct {
 	Name  string
 	Cpf   string
