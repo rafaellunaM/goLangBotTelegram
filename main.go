@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"strings"
 
+	"botTelegram/atendente"
 	"botTelegram/crud"
 	"botTelegram/produtos"
 	"botTelegram/suporte"
@@ -79,6 +80,7 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 	state := suporte.GetUserStates(chatID)
 	teste := produtos.GetTest(chatID)
+	atendenteState := atendente.GetAState(chatID)
 
 	switch {
 	case answer == "1" && state == "":
@@ -113,25 +115,25 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 				})
 				return
 			}
-	
+
 			var productList string
 			for _, product := range products {
 				productList += fmt.Sprintf("%s: R$%.2f\n", product.Name, product.Price)
 			}
-	
+
 			b.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID: update.Message.Chat.ID,
 				Text:   "Lista de Produtos:\n" + productList,
 			})
-	
+
 			produtos.SetUserTest(chatID, "")
-	
+
 		} else if strings.ToLower(answer) == "não" {
 			b.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID: update.Message.Chat.ID,
 				Text:   "Ok lek.",
 			})
-	
+
 			produtos.SetUserTest(chatID, "")
 		} else {
 			b.SendMessage(ctx, &bot.SendMessageParams{
@@ -140,12 +142,10 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 			})
 		}
 
-	case answer == "3":
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: chatID,
-			Text:   "Por favor, nos fale o seu pedido para que possamos atender com mais rapidez. Aguarde um momento que um de nossos atendentes irá lhe ajudar em breve.",
-		})
-
+	case answer == "3" && state == "":
+		atendente.HandleAttendant(ctx, b, chatID)
+	case atendenteState == "order-selected":
+		atendente.HandleOrder(ctx, b, chatID, answer)
 	default:
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,

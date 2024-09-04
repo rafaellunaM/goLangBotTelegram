@@ -36,6 +36,10 @@ services:
       PRODUTOS_API_ROOT: "http://produtos_api:7070"
       PRODUTOS_API_PRODUTOS: "http://produtos_api:7070/produtos"
       PRODUTOS_API_PRODUTO: "http://produtos_api:7070/produto"
+      ATENDENTE_API_ROOT : "http://atendente_api:5050"
+      ATENDENTE_API_ORDER: "http://atendente_api:5050/order"
+      ATENDENTE_API_AGUARDA: "http://atendente_api:5050/aguarda"
+
     ports:
       - "8080:8080"
     networks:
@@ -62,6 +66,18 @@ services:
     restart: always
     ports:
       - "7070:7070"
+    networks:
+      - network
+
+  atendente_api:
+    depends_on:
+      - main_api
+    build: 
+      context: ./atendente_api
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "5050:5050"
     networks:
       - network
       

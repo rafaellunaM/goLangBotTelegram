@@ -146,3 +146,72 @@ func SetUsers(cpf string, name string, phone string, issues string) {
 	}
 
 }
+
+// func GetOrders(pedido string) ([]dbConfig.Order, error) {
+// 	acessDatabase()
+
+// 	// Consulta apenas a tabela orders
+// 	getOrder := `SELECT orders.pedido AS OrderID, orders.produto AS ProductID FROM orders WHERE orders.pedido = $1`
+
+// 	rows, err := db.Query(getOrder, pedido)
+// 	if err != nil {
+// 		log.Printf("Erro ao consultar pedido: %v", err)
+// 		return nil, err
+// 	}
+
+// 	var orders []dbConfig.Order
+// 	for rows.Next() {
+// 		var order dbConfig.Order
+// 		if err := rows.Scan(&order.OrderID, &order.ProductID); err != nil {
+// 			return nil, fmt.Errorf("erro ao ler os dados: %w", err)
+// 		}
+// 		orders = append(orders, order)
+// 	}
+
+// 	return orders, nil
+// }
+
+func GetOrders(pedido string) (string, error) {
+	acessDatabase()
+
+	// Consulta apenas a tabela orders
+	getOrder := `SELECT products.name AS ProductName, products.price  FROM orders INNER JOIN products ON orders.produto = products.ID WHERE orders.pedido = $1;`
+
+	rows, err := db.Query(getOrder, pedido)
+	if err != nil {
+		log.Printf("Erro ao consultar pedido: %v", err)
+		return "", err
+	}
+
+	var orderStr string
+	for rows.Next() {
+		var order dbConfig.Order
+		if err := rows.Scan(&order.OrderID, &order.ProductID); err != nil {
+			return "", fmt.Errorf("erro ao ler os dados: %w", err)
+		}
+		// Adiciona a linha formatada à string
+		orderStr += fmt.Sprintf("%s | R$ %s\n", order.OrderID, order.ProductID)
+	}
+
+	return orderStr, nil
+}
+
+// func GetOrders(productid string) ([]dbConfig.Order, error) {
+// 	acessDatabase()
+
+// 	getOrder := "SELECT products.ID AS ProductID, products.Name AS ProductName, products.Price AS ProductPrice FROM orders INNER JOIN products ON orders.produto = $1"
+// 	rows, err := db.Query(getOrder, productid)
+// 	if err != nil {
+// 		log.Printf("Erro ao consultar pedido %v", err)
+// 	}
+// 	var orders []dbConfig.Order
+// 	for rows.Next() {
+// 		var order dbConfig.Order
+// 		if err := rows.Scan(&order.OrderID, &order.ProductID); err != nil {
+// 			return nil, fmt.Errorf("erro ao ler os dados: %w", err)
+// 		}
+// 		orders = append(orders, order)
+// 	}
+
+// 	return orders, nil
+// }

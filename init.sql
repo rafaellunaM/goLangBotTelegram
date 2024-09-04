@@ -11,6 +11,12 @@ Create Table users (
     phone varchar(255)
 );
 
+Create Table orders(
+    pedido varchar(255),
+    produto varchar(255),
+    FOREIGN KEY (produto) REFERENCES products(ID)
+);
+
 Create Table issues (
     issues varchar(255),
     cpf varchar(255),
@@ -30,3 +36,8 @@ INSERT INTO users (cpf, name, phone) VALUES ('213', 'luna', '198');
 INSERT INTO issues (issues, cpf) VALUES ('problema de conexao', '123');
 INSERT INTO issues (issues, cpf) VALUES ('problema de rede', '321');
 INSERT INTO issues (issues, cpf) VALUES ('problema de dinheiro', '213');
+
+INSERT INTO orders (pedido,produto) values ('133','1');
+INSERT INTO orders (pedido,produto) values ('133','5');
+INSERT INTO orders (pedido,produto) values ('133','4');
+
