@@ -15,6 +15,56 @@ services:
     networks:
       - network
 
+  main_api:
+    depends_on:
+      - db
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: bot
+      DB_USER: bot
+      DB_PASSWORD: bot
+      SUPORTE_API_ROOT: "http://suporte_api:6060"
+      SUPORTE_API_CPF: http://suporte_api:6060/cpf
+      SUPORTE_API_TELEFONE: http://suporte_api:6060/telefone
+      SUPORTE_API_PERGUTNA: http://suporte_api:6060/pergunta
+      SUPORTE_API_AGUARDE: http://suporte_api:6060/aguarde
+      PRODUTOS_API_ROOT: "http://produtos_api:7070"
+      PRODUTOS_API_PRODUTOS: "http://produtos_api:7070/produtos"
+      PRODUTOS_API_PRODUTO: "http://produtos_api:7070/produto"
+    ports:
+      - "8080:8080"
+    networks:
+      - network
+
+  suporte_api:
+    depends_on:
+      - main_api
+    build:
+      context: ./suporte_api
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "6060:6060"
+    networks:
+      - network
+  
+  produtos_api:
+    depends_on:
+      - main_api
+    build: 
+      context: ./produtos_api
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "7070:7070"
+    networks:
+      - network
+
 networks:
   network:
     driver: bridge

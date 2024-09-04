@@ -39,9 +39,9 @@ func getEnv(key, defaultValue string) string {
 }
 
 var (
-	root     = getEnv("SUPORTE_API_ROOT", "http://localhost:7070")
-	produtos = getEnv("SUPORTE_API_PRODUTOS", "http://localhost:7070/produtos")
-	produto  = getEnv("SUPORTE_API_PRODUTO", "http://localhost:7070/produto")
+	root     = getEnv("PRODUTOS_API_ROOT", "http://localhost:7070")
+	produtos = getEnv("PRODUTOS_API_PRODUTOS", "http://localhost:7070/produtos")
+	produto  = getEnv("PRODUTOS_API_PRODUTO", "http://localhost:7070/produto")
 )
 
 func NameTratment(awnser string) bool {

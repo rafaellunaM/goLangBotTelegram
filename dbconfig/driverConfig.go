@@ -46,6 +46,10 @@ func getEnv(key, defaultValue string) string {
 }
 
 var DataSourceName = fmt.Sprintf(
-	"host=% port=%s user=%s password=%s dbname=%s sslmode=disable",
-	Host, Port, User, Password, DbName,
+	"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+	Host,
+	Port,
+	User,
+	Password,
+	DbName,
 )
