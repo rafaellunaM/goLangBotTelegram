@@ -52,4 +52,3 @@ var DataSourceName = fmt.Sprintf(
 	User,
 	Password,
 	DbName,
-)

@@ -27,6 +27,11 @@ example: toke_telegram=bottoken
     http://localhost:6060/telefone
     http://localhost:6060/pergunta
 
+# Api suporte exemplo de uso
+* Pesquisar por sd_bot no telegram
+* Iniciar a conversa
+![alt text](suporte-exemplo.png)
+
 
 # Criando novo package
     go mod init  <package-name>

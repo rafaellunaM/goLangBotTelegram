@@ -64,7 +64,7 @@ services:
       - "7070:7070"
     networks:
       - network
-
+      
 networks:
   network:
     driver: bridge
