@@ -30,7 +30,7 @@ var (
 	User     = getEnv("DB_USER", "bot")
 	Password = getEnv("DB_PASSWORD", "bot")
 	DbName   = getEnv("DB_NAME", "bot")
-	Host     = getEnv("DB_HOST", "db")
+	Host     = getEnv("DB_HOST", "localhost")
 	Port     = getEnv("DB_PORT", "5432")
 
 	TableName   = "products"
@@ -46,6 +46,6 @@ func getEnv(key, defaultValue string) string {
 }
 
 var DataSourceName = fmt.Sprintf(
-	"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+	"host=% port=%s user=%s password=%s dbname=%s sslmode=disable",
 	Host, Port, User, Password, DbName,
 )

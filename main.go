@@ -6,8 +6,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 
 	"botTelegram/crud"
+	"botTelegram/produtos"
 	"botTelegram/suporte"
 
 	"github.com/go-telegram/bot"
@@ -16,6 +18,7 @@ import (
 )
 
 func main() {
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
@@ -75,6 +78,7 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 	}
 
 	state := suporte.GetUserStates(chatID)
+	teste := produtos.GetTest(chatID)
 
 	switch {
 	case answer == "1" && state == "":
@@ -96,26 +100,45 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 		crud.SetUsers(userResponses[chatID].CPF, userResponses[chatID].Name, userResponses[chatID].Phone, userResponses[chatID].Issues)
 
-	case answer == "2":
-		products, err := crud.GetProducts()
-		if err != nil {
-			log.Printf("Erro ao buscar produtos: %v", err)
+	case answer == "2" && teste == "":
+		produtos.HanlderHelloUser(ctx, b, chatID)
+	case teste == "awaiting_answer":
+		if strings.ToLower(answer) == "sim" {
+			products, err := crud.GetProducts()
+			if err != nil {
+				log.Printf("Erro ao buscar produtos: %v", err)
+				b.SendMessage(ctx, &bot.SendMessageParams{
+					ChatID: update.Message.Chat.ID,
+					Text:   "Erro ao buscar produtos.",
+				})
+				return
+			}
+	
+			var productList string
+			for _, product := range products {
+				productList += fmt.Sprintf("%s: R$%.2f\n", product.Name, product.Price)
+			}
+	
 			b.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID: chatID,
-				Text:   "Erro ao buscar produtos.",
+				ChatID: update.Message.Chat.ID,
+				Text:   "Lista de Produtos:\n" + productList,
 			})
-			return
+	
+			produtos.SetUserTest(chatID, "")
+	
+		} else if strings.ToLower(answer) == "não" {
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.Message.Chat.ID,
+				Text:   "Ok lek.",
+			})
+	
+			produtos.SetUserTest(chatID, "")
+		} else {
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.Message.Chat.ID,
+				Text:   "Por favor, responda com 'sim' ou 'não'.",
+			})
 		}
-
-		var productList string
-		for _, product := range products {
-			productList += fmt.Sprintf("%s: R$%.2f\n", product.Name, product.Price)
-		}
-
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: chatID,
-			Text:   "Lista de Produtos:\n" + productList,
-		})
 
 	case answer == "3":
 		b.SendMessage(ctx, &bot.SendMessageParams{
@@ -126,7 +149,7 @@ func handlerResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
 	default:
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
-			Text:   "Escolha uma das opções novamente:\n1 - Suporte\n2 - Produtos\n3 - Atendente\n ou digite a resposta da pergunta anterior corretamente",
+			Text:   "Escolha uma das opções:\n1 - Suporte\n2 - Produtos\n3 - Atendente\n ou digite a resposta da pergunta anterior corretamente",
 		})
 	}
 }
